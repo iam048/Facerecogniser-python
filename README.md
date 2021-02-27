@@ -4,7 +4,7 @@
 
 ## Usage: 
 
-```bash
+```python
 python face_rec.py [-h] [--extract-unknown] --target-dir TARGETDIR [--gen-has] [--known-has DAT]
 
 optional arguments:
