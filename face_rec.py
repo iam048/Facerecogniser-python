@@ -47,7 +47,7 @@ ARG = parser.parse_args()
 
 UNKNOWN = "unknown_faces"
 TARGET = ARG.targetDir
-TOL = 0.4 if ARG.TOL == 'CMP' else ARG.TOL
+TOL = 0.4 if ARG.TOL == 'CMP' else float(ARG.TOL)
 FRAME = ARG.FRAME
 MODEL = "hog"
 if ARG.OUT:
