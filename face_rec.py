@@ -26,31 +26,55 @@ parser.add_argument("--gen-has",
 	)
 parser.add_argument("--known-has",
 	dest="DAT",
-	help="Holds a Known faces"
+	help="Holds a Known face database"
+	)
+parser.add_argument("--out",
+	dest="OUT",
+	help="Collection for Output / Name of the Output"
+	)
+parser.add_argument("--tol",
+	dest="TOL",
+	help="Custom Tolerence Value \n Default is EXT for extraction\n Other options CMP for comparison",
+	default=0.5
+	)
+parser.add_argument("--frame",
+	dest="FRAME",
+	help="Custom Frame size \n default is 30",
+	type=int,
+	default=30
 	)
 ARG = parser.parse_args()
 
 UNKNOWN = "unknown_faces"
 TARGET = ARG.targetDir
-TOL = 0.5
+TOL = 0.4 if ARG.TOL == 'CMP' else ARG.TOL
+FRAME = ARG.FRAME
 MODEL = "hog"
+if ARG.OUT:
+	TITLE = ARG.OUT if ARG.OUT else None
+	try:
+		os.mkdir(f"{UNKNOWN}/{TITLE}")
+	except FileExistsError:
+		pass	
 
 class faceRecogniser():
 	
 	def extract_faces(self,image):
-		encodings = []
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 		faces = face_recognition.face_locations(image, model=MODEL)
-
 		if faces is not None:
 			print("Processing Unknown faces")
 			for (top, right, bottom, left) in faces:
-				face = image[top:bottom, left:right]
+				face = image[top-FRAME:bottom+FRAME, left-FRAME:right+FRAME]
 
 				face_enc = face_recognition.face_encodings(face)
-				result = self.compare(face_enc)
-				if result is not True:
-					cv2.imwrite(f"{UNKNOWN}/{random.random()}.jpg", face)
+				if ARG.DAT:
+					result = self.compare(face_enc)
+					if result is not True:
+						self.write_image(face)
+				else:
+					self.write_image(face)
+					
 
 	def compare(self,encodings) -> bool:
 		data = open(ARG.DAT, 'rb')
@@ -74,6 +98,12 @@ class faceRecogniser():
 					return False
 			except IndexError:
 				pass
+	
+	def write_image(self, image_):
+		if TITLE is not None:
+			cv2.imwrite(f"{UNKNOWN}/{TITLE}/{random.random()}.jpg", image_)
+		else:
+			cv2.imwrite(f"{UNKNOWN}/{random.random()}.jpg", image_)
 
 	def gen_known_has(self):
 		print("[+] Generating Data")
@@ -92,7 +122,7 @@ class faceRecogniser():
 				for enc, name in zip(faces, names):
 					has[name] = enc
 
-				f = open("known_faces_hasscasdes.dat", 'wb')
+				f = open(f"{ARG.OUT}.dat", 'wb')
 				pickle.dump(has, f)
 				f.close()
 
